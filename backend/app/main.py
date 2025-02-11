@@ -50,5 +50,5 @@ async def get_product(barcode: str):
     raise HTTPException(status_code=404, detail="Product not found")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))  # Render provides PORT dynamically
+    port = int(os.getenv("PORT", 10000))  # Render provides PORT dynamically
     uvicorn.run(app, host="0.0.0.0", port=port)
