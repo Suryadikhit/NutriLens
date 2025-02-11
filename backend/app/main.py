@@ -32,6 +32,11 @@ async def fetch_product(barcode: str):
 
     return None  # Return None if product not found
 
+@app.get("/")
+def root():
+    """Root route to confirm API is running."""
+    return {"message": "Welcome to the Open Food Facts API Wrapper!"}
+
 @app.get("/product/{barcode}")
 async def get_product(barcode: str):
     """Get product details by barcode."""
