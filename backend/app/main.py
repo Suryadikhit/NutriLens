@@ -13,8 +13,8 @@ async def fetch_product(barcode: str):
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=5)  # Timeout prevents hanging requests
-            response.raise_for_status()  # Raise error if response status is not 2xx
+            response = await client.get(url, timeout=5)
+            response.raise_for_status()
 
         data = response.json()
 
@@ -50,5 +50,5 @@ async def get_product(barcode: str):
     raise HTTPException(status_code=404, detail="Product not found")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))  # Render provides PORT, default to 8000 for local
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
+    port = int(os.getenv("PORT", 8000))  # Render provides PORT dynamically
+    uvicorn.run(app, host="0.0.0.0", port=port)
