@@ -13,3 +13,16 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Python virtual environment
+venv/
+
+# Ignore JetBrains IDE settings (if you're using PyCharm)
+.idea/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+*.pyd
