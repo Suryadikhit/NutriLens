@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.nutrilens.database.HistoryDatabaseHelper
 import com.example.nutrilens.network.RetrofitClient
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 data class Product(
@@ -31,43 +32,56 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val historyDb = HistoryDatabaseHelper(application.applicationContext) // ✅ Use Application Context
+    private val historyDb = HistoryDatabaseHelper(application.applicationContext) // ✅ Application Context
 
     fun fetchProduct(barcode: String) {
         Log.d("ProductViewModel", "Fetching product for barcode: $barcode")
         _isLoading.value = true
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) { // ✅ Ensures network call is on IO thread
             try {
                 val response = RetrofitClient.apiService.getProduct(barcode)
                 Log.d("ProductViewModel", "API Response: $response")
 
-                if (response.barcode != null) {
-                    _product.value = response
-                    _errorMessage.value = null
-                    Log.d("ProductViewModel", "Product found: ${response.name}")
-
-                    // ✅ Save product search history
-                    historyDb.insertHistory(response.barcode, response.name, response.imageUrl)
-                } else {
-                    _errorMessage.value = "Product not found"
-                    _product.value = null
+                if (response.barcode.isNullOrEmpty()) {
+                    _errorMessage.postValue("Product not found")
+                    _product.postValue(null)
                     Log.w("ProductViewModel", "Product not found for barcode: $barcode")
+                    return@launch
                 }
+
+                _product.postValue(response)
+                _errorMessage.postValue(null)
+                Log.d("ProductViewModel", "Product found: ${response.name}")
+
+                // ✅ Save product search history on IO thread
+                response.barcode.let {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        historyDb.insertHistory(
+                            it,
+                            response.name,
+                            response.imageUrl,
+                            response.brand,
+                            response.ingredients,
+                            response.nutrition
+                        )
+                    }
+                }
+
             } catch (e: retrofit2.HttpException) {
-                _errorMessage.value = "HTTP Error: ${e.code()} - ${e.message()}"
+                _errorMessage.postValue("HTTP Error: ${e.code()} - ${e.message()}")
                 Log.e("ProductViewModel", "HTTP Exception: ${e.message()}", e)
             } catch (e: java.net.SocketTimeoutException) {
-                _errorMessage.value = "Request timed out. Try again."
+                _errorMessage.postValue("Request timed out. Try again.")
                 Log.e("ProductViewModel", "Timeout Exception: ${e.message}", e)
             } catch (e: java.net.UnknownHostException) {
-                _errorMessage.value = "No internet connection."
+                _errorMessage.postValue("No internet connection.")
                 Log.e("ProductViewModel", "No Internet Exception: ${e.message}", e)
             } catch (e: Exception) {
-                _errorMessage.value = "Unexpected error: ${e.message}"
+                _errorMessage.postValue("Unexpected error: ${e.message}")
                 Log.e("ProductViewModel", "Unknown Exception: ${e.message}", e)
             } finally {
-                _isLoading.value = false
+                _isLoading.postValue(false)
                 Log.d("ProductViewModel", "API call completed. isLoading = false")
             }
         }

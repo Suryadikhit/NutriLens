@@ -15,7 +15,7 @@ interface ApiService {
 }
 
 object RetrofitClient {
-    private const val BASE_URL = "https://your-app.onrender.com/"
+    private const val BASE_URL = "https://nutrilens-cqs0.onrender.com"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY  // Log request and response body
