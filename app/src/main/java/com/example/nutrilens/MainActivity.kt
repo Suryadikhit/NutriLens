@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.nutrilens.screens.HistoryScreen
 import com.example.nutrilens.screens.ProductDetailScreen
 import com.example.nutrilens.screens.ScanScreen
+import com.example.nutrilens.screens.SearchScreen
 import com.example.nutrilens.ui.theme.NutriLensTheme
 
 class MainActivity : ComponentActivity() {
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
                     ProductDetailScreen(navController, barcode ?: "")
                 }
                 composable("history") { HistoryScreen(navController) }
+                composable("SearchScreen") { SearchScreen(navController) }
             }
         }
      }

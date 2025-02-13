@@ -12,6 +12,8 @@ import retrofit2.http.Path
 interface ApiService {
     @GET("product/{barcode}")
     suspend fun getProduct(@Path("barcode") barcode: String): Product
+    @GET("products/search/{query}")
+    suspend fun getProductsByName(@Path("query") query: String): List<Product>
 }
 
 object RetrofitClient {

@@ -40,16 +40,16 @@ android {
 }
 
 dependencies {
-    implementation("com.squareup.retrofit2:retrofit:2.9.0") // Retrofit Core
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Gson Converter
-    implementation("com.google.code.gson:gson:2.11.0") // Gson Library
+    implementation("com.squareup.retrofit2:retrofit:2.11.0") // Retrofit Core
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0") // Gson Converter
+    implementation("com.google.code.gson:gson:2.12.1") // Gson Library
     // CameraX dependencies
     implementation("androidx.camera:camera-core:1.4.1")
     implementation("androidx.camera:camera-camera2:1.4.1")
     implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-view:1.4.1")
-    implementation("io.coil-kt:coil-compose:2.4.0") // Coil for image loading
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("io.coil-kt:coil-compose:2.7.0") // Coil for image loading
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // Other essential dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

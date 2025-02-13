@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import com.example.nutrilens.viewmodel.Product
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -29,6 +31,8 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         private const val COLUMN_BRAND = "brand"
         private const val COLUMN_INGREDIENTS = "ingredients"
         private const val COLUMN_NUTRITION = "nutrition"
+
+        private const val TAG = "HistoryDatabase"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -44,38 +48,74 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
             )
         """.trimIndent()
         db.execSQL(createTableQuery)
+        Log.d(TAG, "Database created: $TABLE_NAME")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // No upgrade logic needed for version 1
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
+        onCreate(db)
+        Log.d(TAG, "Database upgraded to version $newVersion")
     }
 
-    fun insertHistory(
-        barcode: String,
-        productName: String?,
-        imageUrl: String?,
-        brand: String?,
-        ingredients: String?,
-        nutrition: Map<String, Any>?
-    ) {
+    // ✅ Insert or update product details
+    fun insertOrUpdateProduct(historyItem: Product) {
         val db = writableDatabase
         try {
             val values = ContentValues().apply {
-                put(COLUMN_BARCODE, barcode)
-                put(COLUMN_PRODUCT_NAME, productName)
-                put(COLUMN_IMAGE_URL, imageUrl)
-                put(COLUMN_BRAND, brand)
-                put(COLUMN_INGREDIENTS, ingredients)
-                put(COLUMN_NUTRITION, nutrition?.let { JSONObject(it).toString() })
+                put(COLUMN_BARCODE, historyItem.barcode)
+                put(COLUMN_PRODUCT_NAME, historyItem.name)
+                put(COLUMN_IMAGE_URL, historyItem.imageUrl)
+                put(COLUMN_BRAND, historyItem.brand)
+                put(COLUMN_INGREDIENTS, historyItem.ingredients)
+                put(COLUMN_NUTRITION, historyItem.nutrition?.let { JSONObject(it).toString() })
             }
-            db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            val result = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            Log.d(TAG, "Inserted/Updated product: $historyItem, result: $result")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error inserting/updating product", e)
         } finally {
             db.close()
         }
     }
 
+    // ✅ Retrieve product details by barcode
+    fun getProductByBarcode(barcode: String): Product? {
+        val db = readableDatabase
+        var product: Product? = null
+        val query = "SELECT * FROM $TABLE_NAME WHERE $COLUMN_BARCODE = ?"
+        val cursor = db.rawQuery(query, arrayOf(barcode))
+
+        try {
+            if (cursor.moveToFirst()) {
+                val productName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_NAME))
+                val imageUrl = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URL))
+                val brand = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BRAND))
+                val ingredients = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENTS))
+                val nutritionJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NUTRITION))
+
+                product = Product(
+                    barcode = barcode,
+                    name = productName,
+                    imageUrl = imageUrl,
+                    brand = brand,
+                    ingredients = ingredients,
+                    nutrition = nutritionJson?.let { parseJsonToMap(it) }
+                )
+                Log.d(TAG, "Product found: $product")
+            } else {
+                Log.d(TAG, "No product found with barcode: $barcode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error retrieving product by barcode", e)
+        } finally {
+            cursor.close()
+            db.close()
+        }
+
+        return product
+    }
+
+    // ✅ Retrieve all history items
     fun getHistory(): List<HistoryItem> {
         val historyList = mutableListOf<HistoryItem>()
         val db = readableDatabase
@@ -87,6 +127,7 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         """.trimIndent()
 
         db.rawQuery(query, null).use { cursor ->
+            Log.d(TAG, "Fetching history items...")
             val barcodeIndex = cursor.getColumnIndexOrThrow(COLUMN_BARCODE)
             val productNameIndex = cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_NAME)
             val imageUrlIndex = cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URL)
@@ -104,20 +145,25 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
 
                 val nutrition = nutritionJson?.let { parseJsonToMap(it) }
 
-                historyList.add(HistoryItem(barcode, productName, imageUrl, brand, ingredients, nutrition))
+                val historyItem = HistoryItem(barcode, productName, imageUrl, brand, ingredients, nutrition)
+                historyList.add(historyItem)
+                Log.d(TAG, "Fetched history item: $historyItem")
             }
         }
 
+        Log.d(TAG, "Total history items fetched: ${historyList.size}")
         db.close()
         return historyList
     }
 
+    // ✅ Delete history item
     fun deleteHistoryItem(barcode: String) {
         val db = writableDatabase
         try {
-            db.delete(TABLE_NAME, "$COLUMN_BARCODE=?", arrayOf(barcode))
+            val deletedRows = db.delete(TABLE_NAME, "$COLUMN_BARCODE=?", arrayOf(barcode))
+            Log.d(TAG, "Deleted history item with barcode: $barcode, Rows affected: $deletedRows")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error deleting history item", e)
         } finally {
             db.close()
         }
@@ -134,7 +180,7 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
             }
             map
         } catch (e: JSONException) {
-            e.printStackTrace()
+            Log.e(TAG, "Error parsing JSON to Map", e)
             emptyMap()
         }
     }

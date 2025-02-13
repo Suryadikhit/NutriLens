@@ -55,18 +55,21 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
                 Log.d("ProductViewModel", "Product found: ${response.name}")
 
                 // ✅ Save product search history on IO thread
-                response.barcode.let {
+                response.barcode.let { barcode ->
                     viewModelScope.launch(Dispatchers.IO) {
-                        historyDb.insertHistory(
-                            it,
-                            response.name,
-                            response.imageUrl,
-                            response.brand,
-                            response.ingredients,
-                            response.nutrition
+                        historyDb.insertOrUpdateProduct(
+                            Product(
+                                barcode = barcode,
+                                name = response.name,
+                                imageUrl = response.imageUrl,
+                                brand = response.brand,
+                                ingredients = response.ingredients,
+                                nutrition = response.nutrition
+                            )
                         )
                     }
                 }
+
 
             } catch (e: retrofit2.HttpException) {
                 _errorMessage.postValue("HTTP Error: ${e.code()} - ${e.message()}")
