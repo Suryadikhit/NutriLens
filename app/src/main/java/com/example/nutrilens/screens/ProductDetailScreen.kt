@@ -13,9 +13,11 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -86,96 +88,160 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
 
 @Composable
 fun ProductDetailsView(product: Product) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Row with Product Image and Info Card
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Product Image
+    val categorizedIngredients = categorizeIngredients(product.ingredients ?: "")
+    val highlightedAdditives = highlightAdditives(product.additives ?: emptyList())
+
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+
+        // Product Image and Info Card
+        Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             product.imageUrl?.let { imageUrl ->
-                Image(
-                    painter = rememberAsyncImagePainter(imageUrl),
-                    contentDescription = product.name,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .padding(4.dp)
-                )
+                Image(painter = rememberAsyncImagePainter(imageUrl), contentDescription = product.name,
+                    modifier = Modifier.size(150.dp).clip(RoundedCornerShape(12.dp)).padding(4.dp))
             }
-
-            // Product Info Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(6.dp)
-            ) {
+            Card(modifier = Modifier.fillMaxWidth().padding(start = 8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(6.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = product.name ?: "No Name", style = MaterialTheme.typography.headlineSmall)
-                    Text(text = "Brand: ${product.brand ?: "Unknown"}", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "Quantity: ${product.quantity ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "Barcode: ${product.barcode ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                    Text(" ${product.name ?: "No Name"}", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp))
+                    Text(" Brand: ${product.brand ?: "Unknown"}", style = MaterialTheme.typography.bodyMedium)
+                    Text(" Quantity: ${product.quantity ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                    Text(" Barcode: ${product.barcode ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
 
-        // Overview Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
+        // Overview
+        Text("🔍 Overview", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+        Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Overview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("Nutri-Score: ${product.nutriScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                Text("NOVA Score: ${product.novaScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("🥗 Nutri-Score: ${product.nutriScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("📊 NOVA Score: ${product.novaScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
             }
         }
 
-        // Nutrition Card
+        // Nutrition
         product.nutrition?.let { nutrition ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
+            Text("🍎 Nutrition Facts (per 100g)", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Nutrition Facts (per 100g)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Energy: ${nutrition["energy-kcal_100g"] ?: "N/A"} kcal")
-                    Text("Carbs: ${nutrition["carbohydrates_100g"] ?: "N/A"}g")
-                    Text("Proteins: ${nutrition["proteins_100g"] ?: "N/A"}g")
-                    Text("Sugars: ${nutrition["sugars_100g"] ?: "N/A"}g")
-                    Text("Fat: ${nutrition["fat_100g"] ?: "N/A"}g")
+                    Text("⚡ Energy: ${nutrition["energy-kcal_100g"] ?: "N/A"} kcal")
+                    Text("🍞 Carbs: ${nutrition["carbohydrates_100g"] ?: "N/A"}g")
+                    Text("🍗 Proteins: ${nutrition["proteins_100g"] ?: "N/A"}g")
+                    Text("🍬 Sugars: ${nutrition["sugars_100g"] ?: "N/A"}g")
+                    Text("🧈 Fat: ${nutrition["fat_100g"] ?: "N/A"}g")
                 }
             }
         }
 
-        // Ingredients Card
-        product.ingredients?.let { ingredients ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Ingredients", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(ingredients, style = MaterialTheme.typography.bodyMedium)
+        // Categorized Ingredients
+        Text("🧪 Ingredients", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+        Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                categorizedIngredients.forEach { (category, items) ->
+                    Text("$category:", fontWeight = FontWeight.Bold)
+                    items.forEach { ingredient ->
+                        Text("• $ingredient", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
         }
+
+        // Highlighted Additives
+        product.additives?.let {
+            Text("⚗️ Additives", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    highlightedAdditives.forEach { (additive, color) ->
+                        Text(additive, style = MaterialTheme.typography.bodyMedium.copy(color = color))
+                    }
+                }
+            }
+        }
+
+        // Packaging
+        product.packaging?.let { packaging ->
+            Text("📦 Packaging", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(packaging, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+
+        // Carbon Footprint
+        product.carbonFootprint?.let { carbonFootprint ->
+            Text("🌍 Carbon Footprint", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
+            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(carbonFootprint, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+fun categorizeIngredients(ingredients: String): Map<String, List<String>> {
+    val sweeteners = listOf("sugar", "glucose", "fructose", "sucrose", "lactose", "maltose", "corn syrup", "aspartame", "saccharin", "sucralose", "stevia")
+    val preservatives = listOf("sodium benzoate", "potassium sorbate", "calcium propionate", "sodium nitrite", "sodium nitrate", "benzoic acid", "sorbic acid")
+    val colors = listOf("red 40", "yellow 5", "blue 1", "blue 2", "green 3", "caramel color", "annatto", "beta-carotene")
+    val emulsifiers = listOf("lecithin", "mono- and diglycerides", "polysorbate 80", "sorbitan monostearate")
+    val stabilizers = listOf("xanthan gum", "guar gum", "pectin", "carrageenan")
+    val antioxidants = listOf("ascorbic acid", "tocopherols", "butylated hydroxytoluene (BHT)", "butylated hydroxyanisole (BHA)")
+    val flavorEnhancers = listOf("monosodium glutamate (MSG)", "disodium inosinate", "disodium guanylate")
+    val thickeners = listOf("corn starch", "potato starch", "gelatin", "agar")
+    val acids = listOf("citric acid", "lactic acid", "malic acid", "acetic acid")
+
+    val categorized = mutableMapOf<String, MutableList<String>>()
+
+    ingredients.split(",").map { it.trim() }.forEach { ingredient ->
+        when {
+            sweeteners.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Sweeteners") { mutableListOf() }.add(ingredient)
+            preservatives.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Preservatives") { mutableListOf() }.add(ingredient)
+            colors.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Colors") { mutableListOf() }.add(ingredient)
+            emulsifiers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Emulsifiers") { mutableListOf() }.add(ingredient)
+            stabilizers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Stabilizers") { mutableListOf() }.add(ingredient)
+            antioxidants.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Antioxidants") { mutableListOf() }.add(ingredient)
+            flavorEnhancers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Flavor Enhancers") { mutableListOf() }.add(ingredient)
+            thickeners.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Thickeners") { mutableListOf() }.add(ingredient)
+            acids.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Acids") { mutableListOf() }.add(ingredient)
+            else -> categorized.getOrPut("Others") { mutableListOf() }.add(ingredient)
+        }
+    }
+
+    return categorized
+}
+
+
+fun highlightAdditives(additives: List<String>): List<Pair<String, Color>> {
+    val colorMap = mapOf(
+        "e100" to Color.Red,
+        "e101" to Color.Yellow,
+        "e102" to Color(0xFFFFC107), // Amber
+        "e110" to Color(0xFFFF9800), // Orange
+        "e120" to Color(0xFFE91E63), // Pink
+        "e122" to Color(0xFFD32F2F), // Deep Red
+        "e129" to Color(0xFFFF5722), // Deep Orange
+        "e133" to Color(0xFF2196F3), // Blue
+        "e140" to Color(0xFF4CAF50), // Green
+        "e150" to Color(0xFF795548), // Brown
+        "e200" to Color.Yellow,
+        "e210" to Color(0xFF9E9E9E), // Gray
+        "e211" to Color(0xFF607D8B), // Blue Gray
+        "e220" to Color(0xFFCDDC39), // Lime
+        "e250" to Color(0xFFF44336), // Red
+        "e270" to Color(0xFF00BCD4), // Cyan
+        "e300" to Color.Green,
+        "e301" to Color(0xFF388E3C), // Dark Green
+        "e320" to Color(0xFF9C27B0), // Purple
+        "e330" to Color(0xFFFFEB3B), // Bright Yellow
+        "e420" to Color(0xFF673AB7), // Deep Purple
+        "e450" to Color(0xFF03A9F4), // Light Blue
+        "e471" to Color(0xFFFFC107), // Amber
+        "e500" to Color(0xFFFFEB3B), // Bright Yellow
+        "e621" to Color(0xFF9C27B0)  // Purple
+    )
+
+    return additives.map { additive ->
+        val color = colorMap[additive.lowercase()] ?: Color.Gray
+        additive to color
     }
 }
