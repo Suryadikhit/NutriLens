@@ -3,8 +3,8 @@ import logging
 from fastapi import FastAPI, HTTPException
 import httpx  # Asynchronous HTTP client
 import uvicorn
-from functools import lru_cache
 from urllib.parse import quote
+
 app = FastAPI()
 
 API_BASE_URL = "https://world.openfoodfacts.org/api/v0/product"
@@ -48,9 +48,9 @@ async def search_products(query: str):
         logger.error(f"Request failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch products from API")
 
-@lru_cache(maxsize=100)
+
 async def fetch_product(barcode: str):
-    """Fetch product details from Open Food Facts API asynchronously with caching."""
+    """Fetch product details from Open Food Facts API asynchronously."""
     url = f"{API_BASE_URL}/{quote(barcode)}.json"  # Encode barcode properly
 
     try:
@@ -89,10 +89,12 @@ async def fetch_product(barcode: str):
         logger.exception("Unexpected error occurred")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 @app.get("/")
 def root():
     """Root route to confirm API is running."""
     return {"message": "Welcome to the Open Food Facts API Wrapper!"}
+
 
 @app.get("/product/{barcode}")
 async def get_product(barcode: str):
@@ -103,6 +105,7 @@ async def get_product(barcode: str):
         return data
 
     raise HTTPException(status_code=404, detail="Product not found")
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))  # Render provides PORT dynamically
