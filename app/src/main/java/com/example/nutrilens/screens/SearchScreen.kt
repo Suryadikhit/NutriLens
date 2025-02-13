@@ -87,7 +87,7 @@ fun SearchScreen(navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        onClick = { navController.navigate("details/${product.name}") }
+                        onClick = { navController.navigate("details/${product.barcode}") }
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Image(

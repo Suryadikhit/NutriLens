@@ -18,8 +18,15 @@ data class Product(
     @SerializedName("ingredients") val ingredients: String?,
     @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("brands") val brand: String?,
+    @SerializedName("quantity") val quantity: String?,
+    @SerializedName("nutri_score") val nutriScore: String?,
+    @SerializedName("nova_score") val novaScore: String?,
+    @SerializedName("additives") val additives: List<String>?,
+    @SerializedName("packaging") val packaging: String?,
+    @SerializedName("carbon_footprint") val carbonFootprint: String?,
     @SerializedName("nutritional_info") val nutrition: Map<String, Any>? = emptyMap()
 )
+
 
 class ProductViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -64,8 +71,15 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
                                 imageUrl = response.imageUrl,
                                 brand = response.brand,
                                 ingredients = response.ingredients,
+                                quantity = response.quantity,
+                                nutriScore = response.nutriScore,
+                                novaScore = response.novaScore,
+                                additives = response.additives,
+                                packaging = response.packaging,
+                                carbonFootprint = response.carbonFootprint,
                                 nutrition = response.nutrition
                             )
+
                         )
                     }
                 }

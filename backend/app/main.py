@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 @app.get("/products/search/{query}")
 async def search_products(query: str):
-    """Search products by name."""
     search_url = f"{SEARCH_BASE_URL}{quote(query)}&search_simple=1&json=1"
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -41,7 +40,6 @@ async def search_products(query: str):
 
 @lru_cache(maxsize=100)
 async def fetch_product(barcode: str):
-    """Fetch product details by barcode with caching."""
     url = f"{API_BASE_URL}/{quote(barcode)}.json"
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -51,13 +49,20 @@ async def fetch_product(barcode: str):
                     response.raise_for_status()
                     data = response.json()
                     if data.get("status") == 1:
+                        product = data["product"]
                         return {
                             "barcode": barcode,
-                            "product_name": data["product"].get("product_name", "Unknown"),
-                            "ingredients": data["product"].get("ingredients_text", "N/A"),
-                            "image_url": data["product"].get("image_front_url", ""),
-                            "brands": data["product"].get("brands", "Unknown"),
-                            "nutritional_info": data["product"].get("nutriments", {}),
+                            "product_name": product.get("product_name", "Unknown"),
+                            "quantity": product.get("quantity", "N/A"),
+                            "ingredients": product.get("ingredients_text", "N/A"),
+                            "image_url": product.get("image_front_url", ""),
+                            "brands": product.get("brands", "Unknown"),
+                            "nutri_score": product.get("nutrition_grades_tags", ["N/A"])[0],
+                            "nova_score": product.get("nova_group", "N/A"),
+                            "additives": product.get("additives_tags", []),
+                            "packaging": product.get("packaging", "N/A"),
+                            "carbon_footprint": product.get("carbon_footprint_from_known_ingredients_100g", "N/A"),
+                            "nutritional_info": product.get("nutriments", {}),
                         }
                 except httpx.RequestError as e:
                     logger.warning(f"Attempt {attempt+1}/{RETRIES} failed: {e}")
@@ -69,7 +74,6 @@ async def fetch_product(barcode: str):
 
 @app.get("/product/{query}")
 async def get_product(query: str):
-    """Get product details by barcode or name."""
     if query.isdigit():
         data = await fetch_product(query)
         if data:
