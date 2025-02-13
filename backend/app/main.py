@@ -3,8 +3,9 @@ import logging
 from fastapi import FastAPI, HTTPException
 import httpx
 import uvicorn
-from functools import lru_cache
 from urllib.parse import quote
+from aiocache import cached
+import asyncio
 
 app = FastAPI()
 
@@ -38,7 +39,8 @@ async def search_products(query: str):
         logger.error(f"Request failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch products from API")
 
-@lru_cache(maxsize=100)
+
+@cached(ttl=600)  # Cache results for 10 minutes
 async def fetch_product(barcode: str):
     url = f"{API_BASE_URL}/{quote(barcode)}.json"
     try:
@@ -59,18 +61,20 @@ async def fetch_product(barcode: str):
                             "brands": product.get("brands", "Unknown"),
                             "nutri_score": product.get("nutrition_grades_tags", ["N/A"])[0],
                             "nova_score": product.get("nova_group", "N/A"),
-                            "additives": product.get("additives_tags", []),
+                            "additives": product.get("additives_tags", []) or ["No additives"],
                             "packaging": product.get("packaging", "N/A"),
-                            "carbon_footprint": product.get("carbon_footprint_from_known_ingredients_100g", "N/A"),
-                            "nutritional_info": product.get("nutriments", {}),
+                            "carbon_footprint": product.get("nutriments", {}).get("carbon-footprint-from-known-ingredients_100g", "N/A"),
+                            "nutritional_info": product.get("nutriments", {})
                         }
                 except httpx.RequestError as e:
                     logger.warning(f"Attempt {attempt+1}/{RETRIES} failed: {e}")
+                    await asyncio.sleep(1)  # Wait before retrying
         logger.error(f"Product {barcode} not found.")
         return None
     except Exception as e:
         logger.exception("Unexpected error occurred")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @app.get("/product/{query}")
 async def get_product(query: str):
@@ -82,9 +86,11 @@ async def get_product(query: str):
     else:
         return await search_products(query)
 
+
 @app.get("/")
 def root():
     return {"message": "Open Food Facts API Wrapper running"}
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))

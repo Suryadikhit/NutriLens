@@ -1,15 +1,37 @@
 package com.example.nutrilens.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +81,12 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Product Details") }, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack(route = "scan", inclusive = false) }) {
+                IconButton(onClick = {
+                    navController.popBackStack(
+                        route = "scan",
+                        inclusive = false
+                    )
+                }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             })
@@ -79,6 +106,7 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge
                 )
+
                 product != null -> ProductDetailsView(product!!)
                 else -> Text("Product not found!", style = MaterialTheme.typography.headlineSmall)
             }
@@ -91,67 +119,160 @@ fun ProductDetailsView(product: Product) {
     val categorizedIngredients = categorizeIngredients(product.ingredients ?: "")
     val highlightedAdditives = highlightAdditives(product.additives ?: emptyList())
 
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())) {
 
         // Product Image and Info Card
-        Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             product.imageUrl?.let { imageUrl ->
-                Image(painter = rememberAsyncImagePainter(imageUrl), contentDescription = product.name,
-                    modifier = Modifier.size(150.dp).clip(RoundedCornerShape(12.dp)).padding(4.dp))
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = product.name,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .padding(4.dp)
+                )
             }
-            Card(modifier = Modifier.fillMaxWidth().padding(start = 8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(6.dp)) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(6.dp)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(" ${product.name ?: "No Name"}", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp))
-                    Text(" Brand: ${product.brand ?: "Unknown"}", style = MaterialTheme.typography.bodyMedium)
-                    Text(" Quantity: ${product.quantity ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                    Text(" Barcode: ${product.barcode ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        " ${product.name ?: "No Name"}",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        " Brand: ${product.brand ?: "Unknown"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        " Quantity: ${product.quantity ?: "N/A"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        " Barcode: ${product.barcode ?: "N/A"}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         }
 
         // Overview
-        Text("🔍 Overview", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-        Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+        Text(
+            "🔍 Overview",
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+            modifier = Modifier.padding(8.dp)
+        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("🥗 Nutri-Score: ${product.nutriScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                Text("📊 NOVA Score: ${product.novaScore ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "🥗 Nutri-Score: ${product.nutriScore ?: "N/A"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    "📊 NOVA Score: ${product.novaScore ?: "N/A"}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
 
         // Nutrition
         product.nutrition?.let { nutrition ->
-            Text("🍎 Nutrition Facts (per 100g)", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+            Text(
+                "🍎 Nutrition Facts (per 100g)",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+                modifier = Modifier.padding(8.dp)
+            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("⚡ Energy: ${nutrition["energy-kcal_100g"] ?: "N/A"} kcal")
-                    Text("🍞 Carbs: ${nutrition["carbohydrates_100g"] ?: "N/A"}g")
-                    Text("🍗 Proteins: ${nutrition["proteins_100g"] ?: "N/A"}g")
-                    Text("🍬 Sugars: ${nutrition["sugars_100g"] ?: "N/A"}g")
+                    Text("⚡ Energy: ${nutrition["energy-kcal_100g"] ?: "N/A"} kcal", modifier = Modifier.padding(bottom = 4.dp))
+                    Text("🍞 Carbs: ${nutrition["carbohydrates_100g"] ?: "N/A"}g", modifier = Modifier.padding(bottom = 4.dp))
+                    Text("🍗 Proteins: ${nutrition["proteins_100g"] ?: "N/A"}g", modifier = Modifier.padding(bottom = 4.dp))
+                    Text("🍬 Sugars: ${nutrition["sugars_100g"] ?: "N/A"}g", modifier = Modifier.padding(bottom = 4.dp))
                     Text("🧈 Fat: ${nutrition["fat_100g"] ?: "N/A"}g")
                 }
             }
         }
 
         // Categorized Ingredients
-        Text("🧪 Ingredients", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-        Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+        Text(
+            "🧪 Ingredients",
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+            modifier = Modifier.padding(8.dp)
+        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 categorizedIngredients.forEach { (category, items) ->
-                    Text("$category:", fontWeight = FontWeight.Bold)
+                    Text("$category:", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
                     items.forEach { ingredient ->
-                        Text("• $ingredient", style = MaterialTheme.typography.bodyMedium)
+                        Text("• $ingredient", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
 
         // Highlighted Additives
-        product.additives?.let {
-            Text("⚗️ Additives", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+        product.additives?.let { additives ->
+            Text(
+                "⚗️ Additives",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+                modifier = Modifier.padding(8.dp)
+            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    highlightedAdditives.forEach { (additive, color) ->
-                        Text(additive, style = MaterialTheme.typography.bodyMedium.copy(color = color))
+                    if (additives.isEmpty()) {
+                        Text(
+                            "🎉 Good news! It seems there are no additives in this product.",
+                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+                        )
+                    } else {
+                        highlightedAdditives.forEach { (additive, color) ->
+                            Text(
+                                additive,
+                                style = MaterialTheme.typography.bodyMedium.copy(color = color),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -159,8 +280,18 @@ fun ProductDetailsView(product: Product) {
 
         // Packaging
         product.packaging?.let { packaging ->
-            Text("📦 Packaging", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+            Text(
+                "📦 Packaging",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+                modifier = Modifier.padding(8.dp)
+            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(packaging, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -168,25 +299,78 @@ fun ProductDetailsView(product: Product) {
         }
 
         // Carbon Footprint
-        product.carbonFootprint?.let { carbonFootprint ->
-            Text("🌍 Carbon Footprint", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp), modifier = Modifier.padding(8.dp))
-            Card(modifier = Modifier.fillMaxWidth().padding(8.dp), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+        product.carbonFootprint?.takeIf { it.isNotBlank() }?.let { carbonFootprint ->
+            Text(
+                "🌍 Carbon Footprint",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
+                modifier = Modifier.padding(8.dp)
+            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(carbonFootprint, style = MaterialTheme.typography.bodyMedium)
                 }
             }
+        } ?: run {
+            Text(
+                "🌍 Carbon Footprint: Data not available",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                modifier = Modifier.padding(8.dp)
+            )
         }
     }
 }
 
+
 fun categorizeIngredients(ingredients: String): Map<String, List<String>> {
-    val sweeteners = listOf("sugar", "glucose", "fructose", "sucrose", "lactose", "maltose", "corn syrup", "aspartame", "saccharin", "sucralose", "stevia")
-    val preservatives = listOf("sodium benzoate", "potassium sorbate", "calcium propionate", "sodium nitrite", "sodium nitrate", "benzoic acid", "sorbic acid")
-    val colors = listOf("red 40", "yellow 5", "blue 1", "blue 2", "green 3", "caramel color", "annatto", "beta-carotene")
-    val emulsifiers = listOf("lecithin", "mono- and diglycerides", "polysorbate 80", "sorbitan monostearate")
+    val sweeteners = listOf(
+        "sugar",
+        "glucose",
+        "fructose",
+        "sucrose",
+        "lactose",
+        "maltose",
+        "corn syrup",
+        "aspartame",
+        "saccharin",
+        "sucralose",
+        "stevia"
+    )
+    val preservatives = listOf(
+        "sodium benzoate",
+        "potassium sorbate",
+        "calcium propionate",
+        "sodium nitrite",
+        "sodium nitrate",
+        "benzoic acid",
+        "sorbic acid"
+    )
+    val colors = listOf(
+        "red 40",
+        "yellow 5",
+        "blue 1",
+        "blue 2",
+        "green 3",
+        "caramel color",
+        "annatto",
+        "beta-carotene"
+    )
+    val emulsifiers =
+        listOf("lecithin", "mono- and diglycerides", "polysorbate 80", "sorbitan monostearate")
     val stabilizers = listOf("xanthan gum", "guar gum", "pectin", "carrageenan")
-    val antioxidants = listOf("ascorbic acid", "tocopherols", "butylated hydroxytoluene (BHT)", "butylated hydroxyanisole (BHA)")
-    val flavorEnhancers = listOf("monosodium glutamate (MSG)", "disodium inosinate", "disodium guanylate")
+    val antioxidants = listOf(
+        "ascorbic acid",
+        "tocopherols",
+        "butylated hydroxytoluene (BHT)",
+        "butylated hydroxyanisole (BHA)"
+    )
+    val flavorEnhancers =
+        listOf("monosodium glutamate (MSG)", "disodium inosinate", "disodium guanylate")
     val thickeners = listOf("corn starch", "potato starch", "gelatin", "agar")
     val acids = listOf("citric acid", "lactic acid", "malic acid", "acetic acid")
 
@@ -194,15 +378,69 @@ fun categorizeIngredients(ingredients: String): Map<String, List<String>> {
 
     ingredients.split(",").map { it.trim() }.forEach { ingredient ->
         when {
-            sweeteners.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Sweeteners") { mutableListOf() }.add(ingredient)
-            preservatives.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Preservatives") { mutableListOf() }.add(ingredient)
-            colors.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Colors") { mutableListOf() }.add(ingredient)
-            emulsifiers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Emulsifiers") { mutableListOf() }.add(ingredient)
-            stabilizers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Stabilizers") { mutableListOf() }.add(ingredient)
-            antioxidants.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Antioxidants") { mutableListOf() }.add(ingredient)
-            flavorEnhancers.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Flavor Enhancers") { mutableListOf() }.add(ingredient)
-            thickeners.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Thickeners") { mutableListOf() }.add(ingredient)
-            acids.any { it.equals(ingredient, ignoreCase = true) } -> categorized.getOrPut("Acids") { mutableListOf() }.add(ingredient)
+            sweeteners.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Sweeteners") { mutableListOf() }.add(ingredient)
+
+            preservatives.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Preservatives") { mutableListOf() }.add(ingredient)
+
+            colors.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Colors") { mutableListOf() }.add(ingredient)
+
+            emulsifiers.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Emulsifiers") { mutableListOf() }.add(ingredient)
+
+            stabilizers.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Stabilizers") { mutableListOf() }.add(ingredient)
+
+            antioxidants.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Antioxidants") { mutableListOf() }.add(ingredient)
+
+            flavorEnhancers.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Flavor Enhancers") { mutableListOf() }.add(ingredient)
+
+            thickeners.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Thickeners") { mutableListOf() }.add(ingredient)
+
+            acids.any {
+                it.equals(
+                    ingredient,
+                    ignoreCase = true
+                )
+            } -> categorized.getOrPut("Acids") { mutableListOf() }.add(ingredient)
+
             else -> categorized.getOrPut("Others") { mutableListOf() }.add(ingredient)
         }
     }
