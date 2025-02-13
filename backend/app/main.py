@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 import httpx  # Asynchronous HTTP client
 import uvicorn
 from functools import lru_cache
-
+from urllib.parse import quote
 app = FastAPI()
 
 API_BASE_URL = "https://world.openfoodfacts.org/api/v0/product"
@@ -48,10 +48,10 @@ async def search_products(query: str):
         logger.error(f"Request failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch products from API")
 
-@lru_cache(maxsize=100)  # Caches the last 100 product requests
+@lru_cache(maxsize=100)
 async def fetch_product(barcode: str):
     """Fetch product details from Open Food Facts API asynchronously with caching."""
-    url = f"{API_BASE_URL}/{barcode}.json"
+    url = f"{API_BASE_URL}/{quote(barcode)}.json"  # Encode barcode properly
 
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
