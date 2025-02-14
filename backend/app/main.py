@@ -53,19 +53,40 @@ async def fetch_product(barcode: str):
                     data = response.json()
                     if data.get("status") == 1:
                         product = data["product"]
-                        # Handle missing data by setting None for Android empty handling
+
+                        additives = product.get("additives_tags", [])
+                        additives_list = [
+                            product.get("additives_prev_tags", {}).get(a, a) for a in additives
+                        ] if additives else ["No additives"]
+
+                        carbon_footprint = product.get("carbon_footprint_data") or \
+                                           product.get("nutriments", {}).get("carbon-footprint-from-known-ingredients_100g")
+
+                        packaging = product.get("packaging_text") or product.get("packaging") or "Not specified"
+
+                        # Extract ingredients with percentages
+                        ingredients_list = []
+                        if "ingredients" in product:
+                            for ing in product.get("ingredients", []):
+                                name = ing.get("text", "Unknown ingredient")
+                                # Ensure percent_estimate is extracted correctly
+                                percent = ing.get("percent_estimate", None)
+                                if percent is None:
+                                    percent = 0.0
+                                ingredients_list.append({"name": name, "percentage": percent})
+
                         return {
                             "barcode": barcode,
                             "product_name": product.get("product_name") or None,
                             "quantity": product.get("quantity") or None,
-                            "ingredients": product.get("ingredients_text") or None,
+                            "ingredients": ingredients_list,
                             "image_url": product.get("image_front_url") or None,
                             "brands": product.get("brands") or None,
                             "nutri_score": (product.get("nutrition_grades_tags") or [None])[0],
                             "nova_score": product.get("nova_group") or None,
-                            "additives": product.get("additives_tags") if product.get("additives_tags") else ["No additives"],
-                            "packaging": product.get("packaging") or None,
-                            "carbon_footprint": product.get("nutriments", {}).get("carbon-footprint-from-known-ingredients_100g") or None,
+                            "additives": additives_list,
+                            "packaging": packaging,
+                            "carbon_footprint": carbon_footprint or None,
                             "nutritional_info": product.get("nutriments", {})
                         }
                 except httpx.RequestError as e:

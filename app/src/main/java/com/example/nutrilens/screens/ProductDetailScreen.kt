@@ -1,19 +1,14 @@
 package com.example.nutrilens.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,7 +42,8 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.nutrilens.components.NutritionItem
 import com.example.nutrilens.components.ProductScoreCards
-import com.example.nutrilens.components.categorizeIngredients
+import com.example.nutrilens.components.SectionCard
+import com.example.nutrilens.components.SectionHeader
 import com.example.nutrilens.components.highlightAdditives
 import com.example.nutrilens.database.HistoryDatabaseHelper
 import com.example.nutrilens.viewmodel.Product
@@ -88,12 +83,7 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Product Details") }, navigationIcon = {
-                IconButton(onClick = {
-                    navController.popBackStack(
-                        route = "scan",
-                        inclusive = false
-                    )
-                }) {
+                IconButton(onClick = { navController.popBackStack(route = "scan", inclusive = false) }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             })
@@ -113,25 +103,18 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge
                 )
-
                 product != null -> ProductDetailsView(product!!)
                 else -> Text("Product not found!", style = MaterialTheme.typography.headlineSmall)
             }
         }
     }
 }
-
 @Composable
 fun ProductDetailsView(product: Product) {
-    val categorizedIngredients =
-        categorizeIngredients(product.ingredients ?: "No ingredients available")
     val highlightedAdditives = highlightAdditives(product.additives ?: listOf("No additives"))
 
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp) // Adds spacing between items
-    ) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
-            // Product Image and Info Card
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,13 +128,8 @@ fun ProductDetailsView(product: Product) {
                         modifier = Modifier
                             .size(150.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .padding(4.dp)
                     )
-                } ?: Text(
-                    "No image available",
-                    modifier = Modifier.padding(8.dp),
-                    color = Color.Gray
-                )
+                } ?: Text("No image available", color = Color.Gray)
 
                 Card(
                     modifier = Modifier
@@ -161,36 +139,17 @@ fun ProductDetailsView(product: Product) {
                     elevation = CardDefaults.cardElevation(6.dp)
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        Text(
-                            product.name ?: "No Name",
-                            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 15.sp),
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Text(
-                            "Brand: ${product.brand ?: "Unknown"}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Text(
-                            "Quantity: ${product.quantity ?: "N/A"}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Text(
-                            "Barcode: ${product.barcode ?: "N/A"}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Text(product.name ?: "No Name", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 15.sp))
+                        Text("Brand: ${product.brand ?: "Unknown"}", style = MaterialTheme.typography.bodyMedium)
+                        Text("Quantity: ${product.quantity ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                        Text("Barcode: ${product.barcode ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
 
-            // Overview
             SectionHeader("🔍 Overview")
-            SectionCard {
-                ProductScoreCards(product.nutriScore, product.novaScore)
-            }
+            SectionCard { ProductScoreCards(product.nutriScore, product.novaScore) }
 
-            // Nutrition Facts
             SectionHeader("🍎 Nutrition Facts (per 100g)")
             SectionCard {
                 val nutrition = product.nutrition ?: emptyMap()
@@ -205,34 +164,25 @@ fun ProductDetailsView(product: Product) {
                 }
             }
 
-            // Ingredients
             SectionHeader("🧪 Ingredients")
             SectionCard {
-                if (categorizedIngredients.isEmpty()) {
+                if (product.ingredients.isEmpty()) {
                     Text("No ingredients available", color = Color.Gray)
                 } else {
-                    categorizedIngredients.forEach { (category, items) ->
+                    product.ingredients.forEach { ingredient ->
                         Text(
-                            "$category:",
-                            fontWeight = FontWeight.Bold,
+                            text = "• ${ingredient.name} - ${"%.1f".format(ingredient.percentage)}%",
+                            fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
-                        items.forEach { ingredient ->
-                            Text("• $ingredient", Modifier.padding(bottom = 4.dp))
-                        }
-                        Spacer(Modifier.height(8.dp))
                     }
                 }
             }
 
-            // Additives
             SectionHeader("⚗️ Additives")
             SectionCard {
-                if (highlightedAdditives.isEmpty() || highlightedAdditives == listOf("No additives")) {
-                    Text(
-                        "🎉 Good news! It seems there are no additives in this product.",
-                        color = Color.White
-                    )
+                if (highlightedAdditives.isEmpty() || highlightedAdditives == listOf(Pair("No additives", Color.Gray))) {
+                    Text("🎉 Good news! It seems there are no additives in this product.", color = Color.White)
                 } else {
                     highlightedAdditives.forEach { (additive, color) ->
                         Text(additive, color = color, modifier = Modifier.padding(bottom = 4.dp))
@@ -240,41 +190,11 @@ fun ProductDetailsView(product: Product) {
                 }
             }
 
-            // Packaging
             SectionHeader("📦 Packaging")
-            SectionCard {
-                Text(product.packaging ?: "No packaging data available", color = Color.Gray)
-            }
+            SectionCard { Text(product.packaging ?: "No packaging data available", color = Color.Gray) }
 
-            // Carbon Footprint
             SectionHeader("🌍 Carbon Footprint")
-            SectionCard {
-                Text(product.carbonFootprint ?: "Data not available", color = Color.Gray)
-            }
+            SectionCard { Text("${product.carbonFootprint ?: "N/A"} kg CO2/100g") }
         }
     }
 }
-@Composable
-fun SectionHeader(title: String) {
-    Text(
-        title,
-        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp),
-        modifier = Modifier.padding(8.dp)
-    )
-}
-
-@Composable
-fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), content = content)
-    }
-}
-
-
-

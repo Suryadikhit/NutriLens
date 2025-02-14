@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 data class Product(
     @SerializedName("barcode") val barcode: String?,
     @SerializedName("product_name") val name: String?,
-    @SerializedName("ingredients") val ingredients: String?,
+    @SerializedName("ingredients") val ingredients: List<Ingredient>,   // Changed from String to List
     @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("brands") val brand: String?,
     @SerializedName("quantity") val quantity: String?,
@@ -26,6 +26,14 @@ data class Product(
     @SerializedName("carbon_footprint") val carbonFootprint: String?,
     @SerializedName("nutritional_info") val nutrition: Map<String, Any>? = emptyMap()
 )
+
+
+data class Ingredient(
+    @SerializedName("name") val name: String,
+    @SerializedName("percentage") val percentage: Double
+)
+
+
 
 
 class ProductViewModel(application: Application) : AndroidViewModel(application) {
