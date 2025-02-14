@@ -1,6 +1,7 @@
 package com.example.nutrilens.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -92,6 +93,7 @@ fun ProductDetailScreen(navController: NavController, barcode: String) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.Black)
                 .padding(paddingValues)
                 .padding(10.dp),
             contentAlignment = Alignment.Center
@@ -136,6 +138,7 @@ fun ProductDetailsView(product: Product) {
                         .fillMaxWidth()
                         .padding(start = 8.dp),
                     shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1F)),
                     elevation = CardDefaults.cardElevation(6.dp)
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
@@ -147,7 +150,6 @@ fun ProductDetailsView(product: Product) {
                 }
             }
 
-            SectionHeader("🔍 Overview")
             SectionCard { ProductScoreCards(product.nutriScore, product.novaScore) }
 
             SectionHeader("🍎 Nutrition Facts (per 100g)")
