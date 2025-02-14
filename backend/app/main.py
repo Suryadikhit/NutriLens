@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @app.get("/products/search/{query}")
+@cached(ttl=600)  # Cache search results for 10 minutes
 async def search_products(query: str):
     search_url = f"{SEARCH_BASE_URL}{quote(query)}&search_simple=1&json=1"
     try:
@@ -52,25 +53,26 @@ async def fetch_product(barcode: str):
                     data = response.json()
                     if data.get("status") == 1:
                         product = data["product"]
+                        # Handle missing data by setting None for Android empty handling
                         return {
                             "barcode": barcode,
-                            "product_name": product.get("product_name", "Unknown"),
-                            "quantity": product.get("quantity", "N/A"),
-                            "ingredients": product.get("ingredients_text", "N/A"),
-                            "image_url": product.get("image_front_url", ""),
-                            "brands": product.get("brands", "Unknown"),
-                            "nutri_score": product.get("nutrition_grades_tags", ["N/A"])[0],
-                            "nova_score": product.get("nova_group", "N/A"),
-                            "additives": product.get("additives_tags", []) or ["No additives"],
-                            "packaging": product.get("packaging", "N/A"),
-                            "carbon_footprint": product.get("nutriments", {}).get("carbon-footprint-from-known-ingredients_100g", "N/A"),
+                            "product_name": product.get("product_name") or None,
+                            "quantity": product.get("quantity") or None,
+                            "ingredients": product.get("ingredients_text") or None,
+                            "image_url": product.get("image_front_url") or None,
+                            "brands": product.get("brands") or None,
+                            "nutri_score": (product.get("nutrition_grades_tags") or [None])[0],
+                            "nova_score": product.get("nova_group") or None,
+                            "additives": product.get("additives_tags") if product.get("additives_tags") else ["No additives"],
+                            "packaging": product.get("packaging") or None,
+                            "carbon_footprint": product.get("nutriments", {}).get("carbon-footprint-from-known-ingredients_100g") or None,
                             "nutritional_info": product.get("nutriments", {})
                         }
                 except httpx.RequestError as e:
                     logger.warning(f"Attempt {attempt+1}/{RETRIES} failed: {e}")
-                    await asyncio.sleep(1)  # Wait before retrying
+                    await asyncio.sleep(1)
         logger.error(f"Product {barcode} not found.")
-        return None
+        raise HTTPException(status_code=404, detail="Product not found")
     except Exception as e:
         logger.exception("Unexpected error occurred")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
